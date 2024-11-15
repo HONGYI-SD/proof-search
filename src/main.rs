@@ -1,9 +1,25 @@
 use warp::{Filter, Rejection, Reply};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_yaml;
 use tokio_postgres::{NoTls, Client};
+use std::fs;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use std::collections::HashMap;
+
+#[derive(Deserialize)]
+struct Config {
+    database: DatabaseConfig,
+}
+
+#[derive(Deserialize)]
+struct DatabaseConfig {
+    host: String,
+    port: u16,
+    user: String,
+    password: String,
+    dbname: String,
+}
 
 #[derive(Serialize)]
 struct BridgeTxProof {
@@ -48,8 +64,26 @@ impl<T> RpcResponse<T> {
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} <config_file>", args[0]);
+        std::process::exit(1);
+    }
+    let config_file = &args[1];
+
+    // 加载配置文件
+    let config: Config = load_config(config_file).expect("Failed to load configuration");
+
+    // 创建 PostgreSQL 客户端
     let (client, connection) = tokio_postgres::connect(
-        "host=13.215.160.229 port=7530 user=solana password=fji289afhfia&#&wiofhe9419ut9@* dbname=validator",
+        &format!(
+            "host={} port={} user={} password={} dbname={}",
+            config.database.host,
+            config.database.port,
+            config.database.user,
+            config.database.password,
+            config.database.dbname
+        ),
         NoTls,
     )
     .await
@@ -121,4 +155,10 @@ async fn handle_get_proof(
             Ok(warp::reply::json(&response))
         }
     }
+}
+
+fn load_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(filename)?;
+    let config: Config = serde_yaml::from_str(&content)?;
+    Ok(config)
 }

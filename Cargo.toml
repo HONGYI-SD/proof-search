@@ -8,4 +8,5 @@ warp = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 tokio-postgres = "0.7"
-
+serde_yaml = "0.9"
+serde_derive = "1.0.103"
