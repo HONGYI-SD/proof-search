@@ -115,7 +115,7 @@ async fn main() {
 
     let routes = proof_route.or(not_found_route);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 6688)).await;
+    warp::serve(routes).run(([0, 0, 0, 0], 6688)).await;
 }
 
 fn with_db(
