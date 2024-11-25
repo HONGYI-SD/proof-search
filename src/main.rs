@@ -24,6 +24,7 @@ struct DatabaseConfig {
 #[derive(Serialize)]
 struct BridgeTxProof {
     index: i64,
+    slot: i64,
     signature: String,
     proof: String,
 }
@@ -137,14 +138,15 @@ async fn handle_get_proof(
 
     let client = db_client.lock().await;
     match client.query_one(
-        "SELECT id, signature, proof FROM bridge_transaction WHERE signature = $1",
+        "SELECT id, slot, signature, proof FROM bridge_transaction WHERE signature = $1",
         &[&sig],
     ).await {
         Ok(row) => {
             let tx = BridgeTxProof {
                 index: row.get(0),
-                signature: row.get(1),
-                proof: row.get(2),
+                slot: row.get(1),
+                signature: row.get(2),
+                proof: row.get(3),
             };
 
             let response = RpcResponse::success(tx, 1);
